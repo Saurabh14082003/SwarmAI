@@ -59,6 +59,16 @@ graph TD
 
 ---
 
+## 🖥️ Dashboard Interface
+
+The SwarmAI Control Room provides a glassmorphic, real-time interface to monitor agent missions and system status.
+
+<p align="center">
+  <img src="dashboard.png" width="100%" alt="SwarmAI Dashboard">
+</p>
+
+---
+
 ## 🌟 Key Features
 
 - 🛠️ **Real MCP Integration**: Decoupled tool servers running via standardized JSON-RPC over stdio.
