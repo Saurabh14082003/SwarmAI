@@ -15,23 +15,29 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 def get_calendar_service():
+    # Construct paths relative to the project root
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    creds_path = os.path.join(base_dir, 'credentials.json')
+    token_path = os.path.join(base_dir, 'token.json')
+
     creds = None
-    # The file token.json stores the user's access and refresh tokens
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if os.path.exists(token_path):
+        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
     
-    # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES
-            )
-            creds = flow.run_local_server(port=0)
+            if not os.path.exists(creds_path):
+                raise FileNotFoundError(f"Critical: {creds_path} not found. Please upload it to Render as a Secret File.")
+
+            flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
+            try:
+                creds = flow.run_local_server(port=0)
+            except Exception as e:
+                raise RuntimeError(f"Authenticating failed: {e}. Ensure token.json is uploaded as a Secret File on Render.")
         
-        # Save the credentials for the next run
-        with open('token.json', 'w') as token:
+        with open(token_path, 'w') as token:
             token.write(creds.to_json())
 
     service = build("calendar", "v3", credentials=creds)
