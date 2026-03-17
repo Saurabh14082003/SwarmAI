@@ -1,24 +1,29 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
 from graph.build_graph import build_graph
+
+app = FastAPI()
 
 graph = build_graph()
 
-state = {
-    "messages": [],
-    "plan": [],
-    "completed_steps": []
-}
+class Query(BaseModel):
+    query: str
 
-while True:
+@app.post("/chat")
+def chat(query: Query):
 
-    query = input("You: ")
-
-    state["query"] = query
+    state = {
+        "query": query.query,
+        "messages": [],
+        "plan": [],
+        "completed_steps": []
+    }
 
     result = graph.invoke(state)
 
-    answer = result["final_answer"]
+    return {"answer": result["final_answer"]}
 
-    print("Assistant:", answer)
 
-    state["messages"].append(f"User: {query}")
-    state["messages"].append(f"Assistant: {answer}")
+@app.get("/")
+def home():
+    return {"status":

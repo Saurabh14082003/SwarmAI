@@ -63,5 +63,17 @@ graph TD
    uv run streamlit run interface/app.py
    ```
 
+## ☁️ Deploy to Render
+
+This project is configured for one-click deployment to **Render**.
+
+1.  **Connect Repo**: Connect your GitHub repository to Render.
+2.  **Web Service**: Select "Web Service".
+3.  **Environment Variables**: Add the following:
+    - `GROQ_API_KEY`
+    - `TAVILY_API_KEY`
+    - `PYTHON_VERSION`: `3.11.0`
+4.  **Headless Auth**: See [AUTH_GUIDE.md](AUTH_GUIDE.md) for handling Google API authentication on Render.
+
 ---
 *Built for scale. Architected for speed.*
