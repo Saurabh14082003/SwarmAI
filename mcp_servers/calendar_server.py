@@ -1,45 +1,21 @@
 from datetime import datetime, timedelta
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
 from mcp.server.fastmcp import FastMCP
+import os
+import sys
+
+# Add project root to path so we can import utils
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+from utils.google_auth import get_google_credentials
 
 # Initialize FastMCP server
 mcp = FastMCP("Calendar")
 
-SCOPES = [
-    "https://www.googleapis.com/auth/calendar"
-]
-
-import os
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-
 def get_calendar_service():
-    # Construct paths relative to the project root
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    creds_path = os.path.join(base_dir, 'credentials.json')
-    token_path = os.path.join(base_dir, 'token.json')
-
-    creds = None
-    if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-    
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            if not os.path.exists(creds_path):
-                raise FileNotFoundError(f"Critical: {creds_path} not found. Please upload it to Render as a Secret File.")
-
-            flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
-            try:
-                creds = flow.run_local_server(port=0)
-            except Exception as e:
-                raise RuntimeError(f"Authenticating failed: {e}. Ensure token.json is uploaded as a Secret File on Render.")
-        
-        with open(token_path, 'w') as token:
-            token.write(creds.to_json())
-
+    creds = get_google_credentials()
     service = build("calendar", "v3", credentials=creds)
     return service
 
