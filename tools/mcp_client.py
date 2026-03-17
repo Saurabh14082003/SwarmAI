@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
@@ -14,10 +15,13 @@ async def _call_mcp_tool_async(server_name, tool_name, arguments):
     if server_name not in SERVERS:
         raise ValueError(f"Unknown server: {server_name}")
     
-    server_script = os.path.join(os.getcwd(), SERVERS[server_name])
+    # Get absolute path relative to this file's directory
+    # utils is at the same level as mcp_servers, and mcp_client.py is inside tools/
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    server_script = os.path.join(base_dir, SERVERS[server_name])
     
     server_params = StdioServerParameters(
-        command="python",
+        command=sys.executable,
         args=[server_script],
     )
     
