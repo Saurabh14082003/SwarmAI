@@ -8,9 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+venv/
 
+# Sensitive files
 .env
 credentials.json
-__pycache__/
-*.pyc
-venv/
+token.json
+token*.json
