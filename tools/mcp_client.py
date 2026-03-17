@@ -16,27 +16,42 @@ async def _call_mcp_tool_async(server_name, tool_name, arguments):
         raise ValueError(f"Unknown server: {server_name}")
     
     # Get absolute path relative to this file's directory
-    # utils is at the same level as mcp_servers, and mcp_client.py is inside tools/
+    # tools/mcp_client.py -> base_dir is project root
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     server_script = os.path.join(base_dir, SERVERS[server_name])
+    
+    # Prepare environment with inherited variables and PYTHONPATH
+    env = os.environ.copy()
+    env["PYTHONPATH"] = base_dir + os.pathsep + env.get("PYTHONPATH", "")
     
     server_params = StdioServerParameters(
         command=sys.executable,
         args=[server_script],
+        env=env
     )
     
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            result = await session.call_tool(tool_name, arguments)
-            return result.content[0].text if result.content else ""
+    try:
+        async with stdio_client(server_params) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                result = await session.call_tool(tool_name, arguments)
+                return result.content[0].text if result.content else ""
+    except Exception as e:
+        print(f"ERROR calling MCP tool {tool_name} on server {server_name}: {e}")
+        # Log more detail if it's an exception group
+        if hasattr(e, "exceptions"):
+            for sub_e in e.exceptions:
+                print(f"  Sub-exception: {sub_e}")
+        return f"Error: {str(e)}"
 
 def call_mcp_tool(server_name, tool_name, **kwargs):
     """Sync wrapper to call an MCP tool."""
-    return asyncio.run(_call_mcp_tool_async(server_name, tool_name, kwargs))
+    try:
+        return asyncio.run(_call_mcp_tool_async(server_name, tool_name, kwargs))
+    except Exception as e:
+        print(f"CRITICAL ERROR in call_mcp_tool: {e}")
+        return f"Critical error executing tool: {e}"
 
 def get_available_mcp_tools():
     """Returns a list of available tool names across all servers."""
-    # For now, we return the keys of SERVERS since each server hosts tools of that name
-    # In a full discovery mode, we would async-list tools from each server
     return list(SERVERS.keys())
